@@ -1,0 +1,35 @@
+{
+  "name": "errandGuy",
+  "version": "1.0.0",
+  "description": "Outsourcing tasks and Chores",
+  "engines":{
+      "node" : "6.9.4"
+    },
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "africastalking": "0.0.9",
+    "bcrypt-nodejs": "0.0.3",
+    "bluebird": "^3.4.7",
+    "body-parser": "^1.16.0",
+    "bson": "^1.0.4",
+    "compression": "^1.6.2",
+    "cookie-parser": "^1.4.3",
+    "ejs": "^2.5.5",
+    "express": "^4.14.0",
+    "fs": "0.0.1-security",
+    "http": "0.0.0",
+    "https": "^1.0.0",
+    "jsonwebtoken": "^7.2.1",
+    "method-override": "^2.3.7",
+    "mongoose": "^4.7.8",
+    "morgan": "^1.7.0",
+    "path": "^0.12.7",
+    "querystring": "^0.2.0",
+    "socketio": "^1.0.0"
+  }
+}

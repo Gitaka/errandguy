@@ -1,0 +1,60 @@
+<!DOCTYPE HTML>
+<html ng-app="">
+ <head>
+    <title><%=title%></title>
+    <link rel="stylesheet" type="text/css" href="../bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="../css/style.css">
+    <link rel="stylesheet" type="text/css" href="../bower_components/font-awesome/css/font-awesome.min.css">
+   
+
+ </head>
+
+ <body ng-app="SeedEx">
+<!--<h2>SeedEX</h2>
+   <p>Name : <input type="text" ng-model="name"></p>
+  <h1>Hello {{name}}</h1>-->
+
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation" data-ng-controller="HomeController">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">SeedEx</a>
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li><a ng-href="#/">Home</a></li>
+                    <li data-ng-show="token"><a ng-href="#/me">Me</a></li>
+                    <li data-ng-hide="token"><a  href="#/signin">Signin</a></li>
+                    <li data-ng-hide="token"><a ng-href="#/signup">Signup</a></li>
+                    <li data-ng-show="token"><a ng-click="logout()">Logout</a></li>
+                </ul>
+            </div><!--/.nav-collapse -->
+        </div>
+    </div>
+
+
+    <div class="container" ng-view>
+
+    </div> <!-- /container -->
+
+
+
+
+
+<script src="../bower_components/angular/angular.min.js"></script>
+<script src="../bower_components/angular/angular-route.min.js"></script>
+<script src="../bower_components/jquery/src/jquery.js"></script>
+<script src="../bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+<script src="../lib/ngStorage.js"></script>
+<script src="../lib/loading-bar.js"></script>
+<script src="../js/app.js"></script>
+<script src="../js/controllers.js"></script>
+<script src="../js/services.js"></script>
+ </body>
+
+</html>
