@@ -14,7 +14,7 @@ var TaskSchema = new Schema({
 	task_description: {
 	   type: String
 	},
-	task_price: {
+	task_cost: {
 		type: Number
 	},
 	task_status:{
@@ -24,6 +24,12 @@ var TaskSchema = new Schema({
 		type:String,
 		default:'null',
 	},
+	invoiced:{
+		type:Number,
+	},
+    confirmed:{
+    	type:Number,
+    },
 	createdOn:{
 	 	type:Date,
 	 	default:Date.now

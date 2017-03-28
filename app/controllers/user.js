@@ -1,6 +1,5 @@
 var mongoose = require('mongoose');
     User = mongoose.model('User');
-    SMSCode = mongoose.model('SmSCode');
     mongoose.Promise = require('bluebird');
     SmSCode = require('mongoose').model('SmSCode');
     jwt = require('jsonwebtoken');
@@ -10,6 +9,8 @@ var mongoose = require('mongoose');
     request = require('request');
     fs = require('fs');
     bcrypt = require('bcrypt-nodejs');
+    Account = mongoose.model('Account');
+    Transaction = mongoose.model('Transaction');
 
 //africa is talking credentials
 var username = 'gitakaMuchai';
@@ -34,6 +35,7 @@ exports.register = function(req,res,next){
                     password = req.body.password;
                     location = req.body.location;
                     phoneNo  = req.body.phoneNo;
+
 
 
                  
@@ -94,7 +96,7 @@ exports.authOtp = function(req,res,next){
     
     var otp = req.body.otp;
         
-        promise = SMSCode.findOne({code:otp}).exec();
+        promise = SmSCode.findOne({code:otp}).exec();
 
         promise.then(function(code){
           code.status = 1;
@@ -108,11 +110,30 @@ exports.authOtp = function(req,res,next){
                  
                  promise.then(function(user){
                       res.json({
-                        "error":true,
+                        "error":false,
                         "message": "User created successfully",
                         "data": user,
                        });
                    return user;
+                 })
+                 .then(function(user){
+                    var account = new Account({
+                       userId : user._id,
+                       accountNo : user.accountNo,
+                       accountName : user.accountName,
+                       amount :0,
+                       tempAmount :0,
+                    });
+
+                    var accountPromise = account.save();
+                        accountPromise.then(function(account){
+                          //do something with the account
+                          console.log('Account created');
+                          console.log(account);
+                        })
+                        .catch(function(err){
+                          console.log('error: account not created' + err);
+                        });
                  })
                  .catch(function(err){
                     console.log(err);
@@ -122,13 +143,12 @@ exports.authOtp = function(req,res,next){
         })
          .catch(function(err){
               res.json({
-                  "error": false,
+                  "error": true,
                   "message": "User not verified." + err,
               });
         });
 
 }
-
 exports.user = function(req,res,next){
        var promise = User.find({token:req.token}).exec();
 
@@ -144,13 +164,193 @@ exports.user = function(req,res,next){
         });
 }
 
+exports.getAccount = function(req,res,next){
+
+       function handleAuthenticationRequest(err,user){
+           if(err){
+             console.log(err);
+             return;
+           }else if(user == null){
+               res.json({
+                  error:true,
+                  message:"User Not Found",
+               });
+              return;  
+           }else{
+                 //user is authenticated
+                 //check users account
+                  var promise = Account.findOne({accountNo:user.accountNo}).exec();
+
+                      promise.then(function(account){
+                         res.json({
+                            error:false,
+                            message:"Account Number",
+                            data:account,
+                         });
+                      })
+                      .catch(function(err){
+                        res.json({
+                          error:true,
+                          message:'error occured,account not found' + err,
+                        });
+                      });
+         
+           }
+         
+       };
+
+       ifAuthenticated(handleAuthenticationRequest,req.token);
+}
+
+exports.debitAccount = function(req,res,next){
+         function handleAuthenticationRequest(err,user){
+           if(err){
+             console.log(err);
+             return;
+           }else if(user == null){
+               res.json({
+                  error:true,
+                  message:"User Not Found",
+               });
+              return;  
+           }else{
+              var amount = req.param('amount');
+              var accountPromise = Account.findOne({accountNo:user.accountNo}).exec();
+                  accountPromise.then(function(account){
+                    if(account){
+                       
+                      //do something,make a post request to africa is talking api c2b mobile checkout
+                     var result = checkoutUser(user.PhoneNo,amount,user.accountNo,user.accountName);
+ 
+                      //create a transaction
+                  
+                      var transaction = new Transaction({
+                          userId : user._id,
+                          accountNo : account.accountNo,
+                          accountName : account.accountName,
+                          transactionFee : amount,
+                          transactionId : result.data.transactionId,
+                          status : result.data.status,
+
+                      });
+
+                      var transactionPromise = transaction.save();
+                          transactionPromise.then(function(transaction){
+                            //transaction was created,now update the accounts table to reflect new balance
+
+                            var promise = Account.findOne({accountNo:transaction.accountNo}).exec();
+                                promise.then(function(account){
+                                  account.amount = account.amount + transaction.transactionFee;
+                                  account.tempAmount = account.tempAmount + transaction.transactionFee;//account.amount; 
+
+                                  return account.save();
+                                })
+                                .then(function(account){
+                                   res.json({
+                                     "error":false,
+                                     "message":"Your Account was debited successfully",
+                                     "data":{
+                                        "account":account,
+                                        "transaction":transaction,
+                                     }
+                                   });
+                                })
+                                .catch(function(err){
+                                  console.log(err);
+                                  res.json({
+                                    "error":true,
+                                    "message":"error occured,account not found" + err,
+                                  });
+                                });
+ 
+                             return transaction;
+                          }) 
+                          .catch(function(err){
+                             console.log('error encountered during transaction insert');
+                          });
+
+                    }
+                 })
+                 .catch(function(err){
+                    res.json({
+                        type: false,
+                        data: 'Error occured',
+                    });
+                 });
+
+
+
+              ////end of debiting account
+
+
+           }
+         
+       };
+
+       ifAuthenticated(handleAuthenticationRequest,req.token);
+}
+
+
+exports.getTransactionsHistory = function(req,res,next){
+         function handleAuthenticationRequest(err,user){
+           if(err){
+             console.log(err);
+             return;
+           }else if(user == null){
+               res.json({
+                  error:true,
+                  message:"User Not Found",
+               });
+              return;  
+           }else{
+                var promise = Transaction.find({userId:user._id}).sort([['_id',-1]]).exec();
+
+                    promise.then(function(transactions){
+                       res.json({
+                          error:false,
+                          message:'Returning Transactions for' + transactions.accountNo,
+                          data:transactions,
+                       });
+                    })
+                    .catch(function(err){
+                        console.log(err);
+
+                        res.json({
+                            error:true,
+                            message:'error occured' + err,
+                        });
+                     });
+           }
+         
+       };
+
+       ifAuthenticated(handleAuthenticationRequest,req.token);
+}
+
+
+ifAuthenticated = function(callBack,token){
+        var promise = User.findOne({token:token}).exec();
+
+        promise.then(function(user){
+
+           callBack(null,user);
+            
+        })
+        .catch(function(err){
+            console.log(err + "user not found matching that token");
+        });
+}
 createNewUser = function(name,email,password,location,phoneNo){
+            var accountNo = randomIntInc(100000,9999999999);
+
             var newUser = new User({
                   name     : name,
                   email    : email,
                   password : password,
                   location : location,
                   phoneNo  : phoneNo,
+                  accountNo : accountNo,
+                  accountName : name,
                });
 
             var newUserPromise = newUser.save();
@@ -261,6 +461,81 @@ sendMessage = function(mobile,otp){
 }
 
 
+
+checkoutUser = function(phoneNo,amount,accountNo,accountName){
+
+      var username = 'gitakaMuchai';
+      var apikey = '0967735d32b57fc6c9c0b643d8355b3128e7b4bc9be23f6de3d3a521d127470f';
+
+      var post_data = querystring.stringify({
+          'username' : username,
+          'accountNo' : accountNo,
+          'phoneNumber' : phoneNo,
+          'currencyCode' : 'KES',
+          'amount' : amount,
+          'metadata': {
+             "accountNo" : accountNo,
+             "accountName" : accountName,
+          }
+      });
+
+      var post_options = {
+           host   : 'api.africastalking.com',
+           path   : '/payment/mobile/checkout/request',
+           method : 'POST',
+          
+           rejectUnauthorized : false,
+           requestCert        : true,
+           agent              : false,
+
+           headers : {
+              'Content-Type' : 'application/x-www-form-urlencoded',
+              'Content-Length': post_data.length,
+              'Accept': 'application/json',
+              'apikey': apikey
+          }
+    };
+
+        /*var post_req = https.request(post_options,function(res){
+          res.setEncoding('utf8');
+          res.on('data',function(data){
+           
+          if(data.status == 'PendingConfirmation'){
+
+            var result = {
+               "error":false,
+               "message":"Request Successfull",
+               "data":data,
+            };
+            return result;
+
+          }else{
+             var result = {
+               "error":true,
+               "message":"Request UnSuccessfull",
+               "data":data,
+            };
+            return result;
+          }
+
+        });
+    });
+
+    post_req.write(post_data);
+    post_req.end();*/
+          var data = {
+            "status": "PendingConfirmation",
+            "description": "Waiting for user input",
+            "transactionId": "ATPid_SampleTxnId123"
+          }
+
+          var result = {
+               "error":false,
+               "message":"Request Successfull",
+               "data":data,
+            };
+            return result;
+}
 
 
 

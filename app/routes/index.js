@@ -12,11 +12,21 @@ module.exports = function(app){
 
     //add tasks
     app.get('/tasks',task.getTasks);
-    app.post('/createTask',task.createTask);
-    app.post('/requestTask',task.requestTask);
-    app.post('/confirmRequest',task.confirm); 
+    app.get('/myTasks',ensureAuthorized,task.myTasks);
+    app.post('/createTask',ensureAuthorized,task.createTask);
 
+    app.post('/requestTask',ensureAuthorized,task.requestTask);
+    app.post('/confirmRequest',ensureAuthorized,task.confirm); 
 
+    //my account
+    app.get('/myAccount',ensureAuthorized,user.getAccount);
+    app.get('/debit',ensureAuthorized,user.debitAccount);
+    app.get('/transactions',ensureAuthorized,user.getTransactionsHistory);
+
+    app.get('/tasksAmIn',ensureAuthorized,task.tasksAmIn);
+    app.get('/invoiceClient',ensureAuthorized,task.invoice);
+    app.get('/invoices',ensureAuthorized,task.viewInvoices);
+    app.get('/taskDone',ensureAuthorized,task.confirmTask);
 
 }
 
@@ -32,9 +42,10 @@ ensureAuthorized = function(req,res,next){
 	var bearerHeader = req.headers['authorization'];
 
 	if(typeof bearerHeader !== 'undefined'){
-		var bearer = bearerHeader.split(" ");
+		var bearer = bearerHeader.split("");
 		bearerToken = bearer[1];
-		req.token = bearerToken;
+		req.token = bearerHeader;
+		//console.log(bearerHeader);
 		next();
 	}else{
  

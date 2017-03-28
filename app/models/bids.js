@@ -2,7 +2,7 @@ var mongoose = require('mongoose');
     Schema = mongoose.Schema;
 
 var BidSchema = new Schema({
-	request_from : {
+	bidder : {
 		type : String
 	},
 	task_id: {

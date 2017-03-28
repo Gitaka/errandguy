@@ -20,6 +20,12 @@ var mongoose =require('mongoose');
 			match:[/.+\@.+\..+/,"Please fill a valid email address"]
 
     	},
+        accountNo:{
+            type: Number,
+        },
+        accountName:{
+            type: String,
+        },
         location:{
             type:String,
         },
