@@ -401,16 +401,46 @@ exports.confirmTask = function(req,res,next){
                    var promise = Task.findOne({_id:task}).exec();  
                      
                      promise.then(function(task){
-                         task.confirmed = 0;
+                         task.confirmed = 1;
                          return task.save();
                      })
                      .then(function(task){
                         //update everyones accounts
+                        //invoice updated to cleared
+                        if(user._id == task.userId){
+                            var promise = Account.findOne({accountNo:user.accountNo}).exec();
+                                promise.then(function(account){
+                                    account.amount = account.amount - task.task_cost;
+                                     return account.save();
+                                    
+                                 });
+                        }
+                         return task;
+                     })
+                     .then(function(task){
+                            var promise = Account.findOne({userId:task.tasker}).exec();
+                                promise.then(function(account){
+                                    account.amount = account.amount + task.task_cost;
+                                    account.tempAmount = account.tempAmount + task.task_cost;
+                                     return account.save();
+                                    
+                                 });   
+                          return task;                    
+                     })
+                     .then(function(task){
 
-                       res.json({
-                        data:task,
-                       });
+                          var promise = Invoice.findOne({task_id:task._id}).exec();
+                            promise.then(function(invoice){
+                              invoice.status = "Cleared";
+                              return invoice.save();
 
+                            })
+                            .then(function(invoice){
+                                    res.json({
+                                        error:false,
+                                        message:'Invoice Cleared,Account Credited',
+                                    });
+                            });
                      })
                      .catch(function(err){
                         console.log('error:' + err);
