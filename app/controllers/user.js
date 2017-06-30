@@ -1,5 +1,6 @@
 var mongoose = require('mongoose');
     User = mongoose.model('User');
+    Profile = mongoose.model('Profile');
     mongoose.Promise = require('bluebird');
     SmSCode = require('mongoose').model('SmSCode');
     jwt = require('jsonwebtoken');
@@ -11,6 +12,7 @@ var mongoose = require('mongoose');
     bcrypt = require('bcrypt-nodejs');
     Account = mongoose.model('Account');
     Transaction = mongoose.model('Transaction');
+
 
 //africa is talking credentials
 var username = 'gitakaMuchai';
@@ -163,7 +165,19 @@ exports.user = function(req,res,next){
             console.log(err + "user not found matching that token");
         });
 }
-
+exports.getAllUsers = function(req,res){
+      var promise = Profile.find({}).populate({path: 'user',model: 'User'}).exec();
+          promise.then(function(users){
+            res.json({
+              error:'false',
+              type:true,
+              data:users
+            });
+          })
+          .catch(function(err){
+             console.log(err + "DB not returning users");
+          });
+};
 exports.getAccount = function(req,res,next){
 
        function handleAuthenticationRequest(err,user){
@@ -340,6 +354,7 @@ ifAuthenticated = function(callBack,token){
             console.log(err + "user not found matching that token");
         });
 }
+
 createNewUser = function(name,email,password,location,phoneNo){
             var accountNo = randomIntInc(100000,9999999999);
 

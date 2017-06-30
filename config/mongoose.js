@@ -20,6 +20,7 @@ module.exports = function(){
 	require('../app/models/account.js');
 	require('../app/models/transactions.js');
     require('../app/models/invoice.js');
+    require('../app/models/profile.js');
     
 	return db;
 };

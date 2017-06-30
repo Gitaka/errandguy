@@ -74,7 +74,7 @@ exports.setUserProfile = function(req,res,next){
                });
               return;  
            }else{
-                var storage = multer.diskStorage({
+                /*var storage = multer.diskStorage({
                   destination: function (req, file, cb) {
                     cb(null,baseDir)
                   },
@@ -93,7 +93,7 @@ exports.setUserProfile = function(req,res,next){
                             });
                         }
                         var imageFile = req.file;
-                        var profileFilename = imageFile.filename;
+                        var profileFilename = imageFile.filename;*/
 
 
                         var userId = user._id;
@@ -105,10 +105,12 @@ exports.setUserProfile = function(req,res,next){
 
                         var  profile = new Profile({
                                  profileUserId : userId,
+                                 user:userId,
                                  ratings :'1',
                                  userPreferedTasks: req.body.preferedTasks,
                                  userSkills: req.body.userSkills,
-                                 profiePic : profileFilename,
+                                 //profiePic : profileFilename,
+                                 profiePic : req.body.profilePic,
                                  location : locationObj,                 
                         });
 
@@ -129,7 +131,7 @@ exports.setUserProfile = function(req,res,next){
                             });
 
                         //end of saving user profile;
-                    });
+                   // });
 
 
 

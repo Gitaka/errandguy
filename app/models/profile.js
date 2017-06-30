@@ -5,13 +5,16 @@ var mongoose = require('mongoose');
         profileUserId:{
         	type: String,
         },
+        user: {
+           ref: 'User',
+           type: String
+        }, 
         ratings:{
         	type:Number,
         	default:0
         },
         userPreferedTasks:{
              type: String,
-    	
         },
         userSkills:[
          {

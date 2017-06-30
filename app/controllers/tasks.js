@@ -174,7 +174,9 @@ exports.requestTask = function(req,res,next){
 
                                        newBid = new Bid({
                                         bidder : user._id,
+
                                         task_id : req.body.task_id,
+                                        user:user._id,
                                        });
                                       
                                        bidPromise = newBid.save();
@@ -456,3 +458,84 @@ exports.confirmTask = function(req,res,next){
 
       ifAuthenticated(handleAuthenticationRequest,req.token);
 }
+
+exports.getTaskRequests = function(req,res,next){
+           function handleAuthenticationRequest(err,user){
+           if(err){
+             console.log(err);
+             return;
+           }else if(user == null){
+               res.json({
+                  error:true,
+                  message:"User Not Found",
+               });
+              return;  
+           }else{
+             var taskId = req.body.taskId;
+             var promise = Bid.find({task_id:taskId}).populate({path: 'bidder',model: 'User'}).exec();
+                 promise.then(function(bid){
+
+                            res.send({
+                                'error':false,
+                                'message':'return',
+                                'data':bid,
+                              });
+                 })
+                 .catch(function(err){
+                    res.send({
+                      'error':true,
+                      'message':'cannot get bids' + err,
+                    });
+                 });
+           }
+         };
+  ifAuthenticated(handleAuthenticationRequest,req.token);
+};
+
+exports.invoiceNotification = function(req,res,next){
+             function handleAuthenticationRequest(err,user){
+           if(err){
+             console.log(err);
+             return;
+           }else if(user == null){
+               res.json({
+                  error:true,
+                  message:"User Not Found",
+               });
+              return;  
+           }else{
+              var taskId = req.body.taskId;
+                  taskOwner = req.body.taskOwner;
+                  tasker = req.body.tasker;
+                  amount = req.body.amount;
+                  taskName = req.body.taskName;
+                  dueDate = req.body.dueDate;
+                
+                 var promise = User.findById(taskOwner).exec();
+
+                  promise.then(function(user){
+                     var userPhoneNo = user.phoneNo;
+                         username = user.name;
+                         
+                         taskerpromise = User.findById(tasker).exec();
+                         taskerpromise.then(function(taskerInfo){
+                            var taskerName = taskerInfo.name;
+                             
+                             res.send({
+                               "error":false,
+                               "userPhoneNo":userPhoneNo,
+                               "message":"Hey"+" "+username+" "+"Received Invoice For:" +" "+ taskName +" "+ "From"+" "+taskerName+" "+ "Of amount"+" "+ amount+" "+"Due On"+" "+dueDate+".",
+                             });
+
+                         });
+                     
+
+                    return user;
+                  })
+                  .catch(function(err){
+                      console.log(err + "user not found matching that id");
+                  });
+           }
+         }
+  ifAuthenticated(handleAuthenticationRequest,req.token);
+};
