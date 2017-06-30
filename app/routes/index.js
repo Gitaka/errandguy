@@ -1,14 +1,24 @@
 var index = require('../controllers/index.js');
 var user = require('../controllers/user.js');
 var task = require('../controllers/tasks.js');
+var profile = require('../controllers/profile.js');
 
 module.exports = function(app){
+
+
 	app.get('/',index.welcome);
 
 	app.post('/register',user.register);
 	app.post('/authenticate',user.auth); 
 	app.post('/authenticate/otp',user.authOtp);
     app.get('/user',ensureAuthorized,user.user);
+    app.get('/users',user.getAllUsers);
+
+    //set use profile
+    app.post('/getUserProfile',profile.getJoinUserProfile);
+    app.get('/userProfile',ensureAuthorized,profile.getUserProfile);
+    //app.post('/userProfile',profile.setUserProfile);
+    app.post('/userProfile',ensureAuthorized,profile.setUserProfile);
 
     //add tasks
     app.get('/tasks',task.getTasks);
@@ -27,6 +37,8 @@ module.exports = function(app){
     app.get('/invoiceClient',ensureAuthorized,task.invoice);
     app.get('/invoices',ensureAuthorized,task.viewInvoices);
     app.get('/taskDone',ensureAuthorized,task.confirmTask);
+    app.post('/getBids',ensureAuthorized,task.getTaskRequests);
+    app.post('/invoiceNotification',ensureAuthorized,task.invoiceNotification);
 
 }
 
