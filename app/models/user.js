@@ -33,13 +33,19 @@ var mongoose =require('mongoose');
            type:String,
            unique:true,
         },
+        ratings:{
+            type:Number,
+            default:1
+        },
         token:{
           type:String,
         },
+
     	 createdOn:{
 	 	       type:Date,
 	 	       default:Date.now
-	    }
+        }
+	    
     });
 
     mongoose.model('User',UserSchema);

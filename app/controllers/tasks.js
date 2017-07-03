@@ -25,6 +25,7 @@ exports.createTask = function(req,res,next){
                          task_description : req.body.desc,
                          task_cost : req.body.cost,
                          task_status : 0,
+                         category:req.body.category,
                          invoiced : 0,
                          confirmed : 0,
                        });
@@ -365,7 +366,11 @@ exports.viewInvoices = function(req,res,next){
                });
               return;  
            }else{
-             var promise = Invoice.find({task_owner:user._id}).sort([['_id',-1]]).exec();
+             var promise = Invoice.find({task_owner:user._id})
+                           .populate({path: 'task_id',model: 'Task'})
+                           .populate({path: 'tasker',model: 'User'})
+                           .sort([['_id',-1]]).exec();
+
                  promise.then(function(invoice){
                      res.json({
                         error:false,

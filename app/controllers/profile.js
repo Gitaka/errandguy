@@ -13,7 +13,7 @@ var baseDir = __dirname.substring(0,__dirname.length - 11)+'public'+"\\"+'upload
 exports.getJoinUserProfile = function(req,res,next){
   var user = req.body.userId;
 
-  var promise = Profile.findOne({profileUserId:user}).exec();
+  var promise = Profile.findOne({profileUserId:user}).populate({path:'user',model:'User'}).exec();
       promise.then(function(userProfile){
            res.send({
               "error":false,

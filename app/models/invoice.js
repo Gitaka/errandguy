@@ -6,9 +6,11 @@ var InvoiceSchema = new Schema({
     	type: String,
     },
 	task_id: {
+		ref: 'Task',
 		type: String,
 	},
 	tasker:{
+		ref: 'User',
 		type: String,
 	},
 	amount:{

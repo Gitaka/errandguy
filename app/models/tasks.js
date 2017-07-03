@@ -24,6 +24,10 @@ var TaskSchema = new Schema({
 		type:String,
 		default:'null',
 	},
+	category:{
+		type:String,
+		
+	},
 	invoiced:{
 		type:Number,
 	},
