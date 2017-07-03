@@ -367,8 +367,7 @@ exports.viewInvoices = function(req,res,next){
               return;  
            }else{
              var promise = Invoice.find({task_owner:user._id})
-                           .populate({path: 'task_id',model: 'Task'})
-                           .populate({path: 'tasker',model: 'User'})
+                           
                            .sort([['_id',-1]]).exec();
 
                  promise.then(function(invoice){

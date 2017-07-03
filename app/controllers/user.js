@@ -376,7 +376,8 @@ createNewUser = function(name,email,password,location,phoneNo){
                   .then(function(user){
                     var otp = randomIntInc(100000,999999);
                     var userId = user._id;
-
+                    
+                    createProfile(userId);
                     createOneTimePassword(userId,phoneNo,otp);
                     console.log("creating a one time password and saving the sms code to db");
                     return user;
@@ -419,7 +420,21 @@ createOneTimePassword = function(userId,mobile,otp){
 
 }
 
+createProfile = function(userId){
+        var  profile = new Profile({
+             profileUserId : userId,
+             user:userId,
+             ratings :'1',                             
+            });
 
+        var profilePromise = profile.save();
+            profilePromise.then(function(profile){
+                    console.log("profile created");
+                  })
+              .catch(function(err){
+                     console.log('creating profile error'+"--"+ err);
+                   });
+}
 randomIntInc = function(low,high){
     return Math.floor(Math.random() * (high - low + 1) + low);
 };
