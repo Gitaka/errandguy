@@ -8,6 +8,10 @@ var mongoose = require('mongoose');
         user: {
            ref: 'User',
            type: String
+        },
+        bio:{
+            type:String,
+        
         }, 
         ratings:{
         	type:Number,

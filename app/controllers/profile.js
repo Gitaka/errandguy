@@ -62,6 +62,46 @@ exports.getUserProfile = function(req,res,next){
 
        ifAuthenticated(handleAuthenticationRequest,req.token);
 };
+exports.updateUserProfile = function(req,res,next){
+         function handleAuthenticationRequest(err,user){
+           if(err){
+             console.log(err);
+             return;
+           }else if(user == null){
+               res.json({
+                  error:true,
+                  message:"User Not Found",
+               });
+              return;  
+           }else{
+               var bio = req.body.bio;
+               var promise = Profile.findOne({profileUserId:user._id}).exec();
+                   promise.then(function(profile){
+                       profile.bio = bio;
+                       return profile.save();
+
+                   })
+                   .then(function(profile){
+                       res.send({
+                        'error':false,
+                        'message':'user profile update',
+                        'data':profile,
+                      });
+                   })
+                   .catch(function(err){
+                     console.log('Can not find profile');
+                     res.send({
+                       'error':true,
+                       'message':err,
+                     });
+                   });
+           }
+         } 
+
+
+
+    ifAuthenticated(handleAuthenticationRequest,req.token);
+};
 exports.setUserProfile = function(req,res,next){
         function handleAuthenticationRequest(err,user){
            if(err){
@@ -95,7 +135,6 @@ exports.setUserProfile = function(req,res,next){
                         var imageFile = req.file;
                         var profileFilename = imageFile.filename;*/
 
-
                         var userId = user._id;
                         console.log(user._id);
                         var locationObj = {
@@ -109,6 +148,7 @@ exports.setUserProfile = function(req,res,next){
                                  ratings :'1',
                                  userPreferedTasks: req.body.preferedTasks,
                                  userSkills: req.body.userSkills,
+                                 bio : req.body.bio,
                                  //profiePic : profileFilename,
                                  profiePic : req.body.profilePic,
                                  location : locationObj,                 

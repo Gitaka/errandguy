@@ -14,10 +14,14 @@ module.exports = function(app){
     app.get('/user',ensureAuthorized,user.user);
     app.get('/users',user.getAllUsers);
 
+    app.post('/login',user.login);
+    app.post('/getTasksByLocation',ensureAuthorized,task.getTasksBylocation);
+    app.post('/getTasksByCategory',ensureAuthorized,task.getTasksByCategory);
+
     //set use profile
     app.post('/getUserProfile',profile.getJoinUserProfile);
     app.get('/userProfile',ensureAuthorized,profile.getUserProfile);
-    //app.post('/userProfile',profile.setUserProfile);
+    app.post('/updateUserProfile',ensureAuthorized,profile.updateUserProfile);
     app.post('/userProfile',ensureAuthorized,profile.setUserProfile);
 
     //add tasks

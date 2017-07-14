@@ -16,7 +16,7 @@ var mongoose = require('mongoose');
 
 //africa is talking credentials
 var username = 'gitakaMuchai';
-var apikey = '0967735d32b57fc6c9c0b643d8355b3128e7b4bc9be23f6de3d3a521d127470f';
+var apikey = '859103492dc65663f0b46facd6964987d808833eccf09b38c95dcd07ca334804';
 
 
 //User.findOne({email:req.body.email,password:req.body.password}
@@ -38,14 +38,15 @@ exports.register = function(req,res,next){
                     location = req.body.location;
                     phoneNo  = req.body.phoneNo;
 
+                    salt = bcrypt.genSaltSync(10);
+                    hash = bcrypt.hashSync(password,salt);
 
 
-                 
-                 var info = createNewUser(name,email,password,location,phoneNo);
+                 var info = createNewUser(name,email,hash,location,phoneNo);
                  res.json({
                         name:name,
                         email:email,
-                        password:password,
+                        password:hash,
                         location:location,
                         phoneNo:phoneNo,
                         info:info,
@@ -64,7 +65,51 @@ exports.register = function(req,res,next){
 
 }
 
+exports.login = function(req,res,next){
+  var password = req.body.password;
+      email = req.body.email;
 
+  var promise = User.findOne({email:email}).exec();
+
+      promise.then(function(user){
+             if(!user){
+                 res.json({
+                 error:true,
+                 message:"Authentication Failure User not found" ,
+                });
+              }else{ 
+               
+                  var promise = SmSCode.findOne({userId:user._id}).exec();
+
+                      promise.then(function(smSCode){
+                             if(!smSCode){
+                                res.json({
+                                 error:true,
+                                 data:"Authentication Failure smscode not found" ,
+                                });
+                              }else{ 
+                                sendMessage(user.phoneNo,smSCode.code);
+                                 res.json({
+                                    error:false,
+                                    message:'user loggedIn successfully',
+                                   
+                                    
+                                });                              
+                                  
+                              }
+                            return user;
+                      });
+              }
+            return user;
+      })
+      .catch(function(err){
+        res.json({
+            type:false,
+            data:"Error Occured" + err,
+        });
+      });
+    
+}
 
 exports.auth = function(req,res,next){
   var promise = User.findOne({email:req.body.email,password:req.body.password}).exec();
@@ -389,8 +434,8 @@ createNewUser = function(name,email,password,location,phoneNo){
                   });
 
             var res = {
-               "error":true,
-               "message":"User creates and SMS request is initiated! You will be receiving it shortly",
+               "error":false,
+               "message":"User created and SMS request is initiated! You will be receiving it shortly",
             };
             return res;
 }
@@ -406,7 +451,7 @@ createOneTimePassword = function(userId,mobile,otp){
           var smsCodePromise = smsCodes.save();
               smsCodePromise.then(function(codes){
                   
-              //sendMessage(mobile,otp);
+              sendMessage(mobile,otp);
               console.log("sending sms verification code");
 
                 return codes;

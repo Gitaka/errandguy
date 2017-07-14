@@ -137,6 +137,70 @@ exports.myTasks = function(req,res,next){
 
        ifAuthenticated(handleAuthenticationRequest,req.token);
 }
+exports.getTasksByCategory = function(req,res,next){
+      function handleAuthenticationRequest(err,user){
+           if(err){
+             console.log(err);
+             return;
+           }else if(user == null){
+               res.json({
+                  error:true,
+                  message:"User Not Found",
+               });
+              return;  
+           }else{
+            var category = req.body.category;
+
+                  promise = Task.find({category:category}).sort([['_id',-1]]).exec();
+
+                  promise.then(function(challenges){
+                      res.json({
+                        error:false,
+                        message:'Tasks found',
+                        data:challenges,
+                      });
+                  })
+                .catch(function(err){
+                  console.log('Cannot get tasks by location' + error);
+                  
+                });
+           }
+         }
+
+  ifAuthenticated(handleAuthenticationRequest,req.token);
+};
+exports.getTasksBylocation = function(req,res,next){
+      function handleAuthenticationRequest(err,user){
+           if(err){
+             console.log(err);
+             return;
+           }else if(user == null){
+               res.json({
+                  error:true,
+                  message:"User Not Found",
+               });
+              return;  
+           }else{
+            var location = req.body.location;
+
+                  promise = Task.find({task_location:location}).sort([['_id',-1]]).exec();
+
+                  promise.then(function(tasks){
+                      res.json({
+                        error:false,
+                        message:'Tasks found',
+                        data:tasks,
+                      });
+                  })
+                .catch(function(err){
+                  console.log('Cannot get tasks by location' + error);
+
+                });
+           }
+         }
+
+  ifAuthenticated(handleAuthenticationRequest,req.token);
+};
 exports.requestTask = function(req,res,next){
 	       function handleAuthenticationRequest(err,user){
            if(err){
@@ -367,7 +431,8 @@ exports.viewInvoices = function(req,res,next){
               return;  
            }else{
              var promise = Invoice.find({task_owner:user._id})
-                           
+                           .populate({path: 'task_id',model: 'Task'})
+                           .populate({path: 'tasker',model: 'User'})
                            .sort([['_id',-1]]).exec();
 
                  promise.then(function(invoice){
