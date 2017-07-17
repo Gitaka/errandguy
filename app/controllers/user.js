@@ -12,6 +12,7 @@ var mongoose = require('mongoose');
     bcrypt = require('bcrypt-nodejs');
     Account = mongoose.model('Account');
     Transaction = mongoose.model('Transaction');
+    shortId = require('shortid');
 
 
 //africa is talking credentials
@@ -210,6 +211,21 @@ exports.user = function(req,res,next){
             console.log(err + "user not found matching that token");
         });
 }
+
+exports.userInfo = function(req,res,next){
+  var userId = req.body.userId;
+  var promise = User.find({_id:userId}).exec();
+      promise.then(function(user){
+         res.json({
+            error: false,
+            message:"Returning user details",
+            data:user,
+         });
+      })
+       .catch(function(err){
+          console.log("Cannot get user information" + err);
+       });
+};
 exports.getAllUsers = function(req,res){
       var promise = Profile.find({}).populate({path: 'user',model: 'User'}).exec();
           promise.then(function(users){
@@ -289,6 +305,8 @@ exports.debitAccount = function(req,res,next){
                           accountName : account.accountName,
                           transactionFee : amount,
                           transactionId : result.data.transactionId,
+                          type:'Deposit',
+                          source:result.data.source,
                           status : result.data.status,
 
                       });
@@ -349,7 +367,91 @@ exports.debitAccount = function(req,res,next){
        ifAuthenticated(handleAuthenticationRequest,req.token);
 }
 
+exports.creditAccount = function(req,res,next){
+            function handleAuthenticationRequest(err,user){
+           if(err){
+             console.log(err);
+             return;
+           }else if(user == null){
+               res.json({
+                  error:true,
+                  message:"User Not Found",
+               });
+              return;  
+           }else{
+               var amount = req.param('amount');
 
+              var accountPromise = Account.findOne({accountNo:user.accountNo}).exec();
+                  accountPromise.then(function(account){
+                    if(account){
+                       
+                      //do something,make a post request to africa is talking api c2b mobile checkout
+                     var result = checkoutUser(user.PhoneNo,amount,user.accountNo,user.accountName);
+ 
+                      //create a transaction
+                  
+                      var transaction = new Transaction({
+                          userId : user._id,
+                          accountNo : account.accountNo,
+                          accountName : account.accountName,
+                          transactionFee : amount,
+                          transactionId : result.data.transactionId,
+                          type:'withdrawal',
+                          source:result.data.source,
+                          status : result.data.status,
+
+                      });
+
+                      var transactionPromise = transaction.save();
+                          transactionPromise.then(function(transaction){
+                            //transaction was created,now update the accounts table to reflect new balance
+
+                            var promise = Account.findOne({accountNo:transaction.accountNo}).exec();
+                                promise.then(function(account){
+                                  account.amount = account.amount - transaction.transactionFee;
+                                  account.tempAmount = account.tempAmount - transaction.transactionFee;//account.amount; 
+
+                                  return account.save();
+                                })
+                                .then(function(account){
+                                   res.json({
+                                     "error":false,
+                                     "message":"Your Account was credited successfully",
+                                     "data":{
+                                        "account":account,
+                                        "transaction":transaction,
+                                     }
+                                   });
+                                })
+                                .catch(function(err){
+                                  console.log(err);
+                                  res.json({
+                                    "error":true,
+                                    "message":"error occured,account not found" + err,
+                                  });
+                                });
+ 
+                             return transaction;
+                          }) 
+                          .catch(function(err){
+                             console.log('error encountered during transaction insert');
+                          });
+
+                    }
+                 })
+                 .catch(function(err){
+                    res.json({
+                        type: false,
+                        data: 'Error occured',
+                    });
+                 });
+
+              ////end of crediting account
+           }
+         }
+
+           ifAuthenticated(handleAuthenticationRequest,req.token);
+};
 exports.getTransactionsHistory = function(req,res,next){
          function handleAuthenticationRequest(err,user){
            if(err){
@@ -601,7 +703,8 @@ checkoutUser = function(phoneNo,amount,accountNo,accountName){
           var data = {
             "status": "PendingConfirmation",
             "description": "Waiting for user input",
-            "transactionId": "ATPid_SampleTxnId123"
+            "transactionId": "ATPid_"+shortId.generate(),
+            "source":phoneNo,
           }
 
           var result = {

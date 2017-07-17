@@ -28,7 +28,7 @@
 
   db.accounts.update({'userId':'58ac9ea68fa27318a0f0e9c0'},{$set:{'tempAmount':'200'}})
 
-  db.tournaments.update({'userId':'58ac9ea68fa27318a0f0e9c0'},{$set:{'tempAmount':'200'}})
+  db.tasks.update({'task_name':'Queeing'},{$set:{'category':'Queeing'}})
 
 
   db.accounts.remove({'userId':"58d9067c339d0916ec9c7c9c"},1)  //delete only one record

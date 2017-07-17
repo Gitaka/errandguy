@@ -3,3 +3,7 @@ exports.welcome = function(req,res){
 		'message':'welcome to errand guy'
 	});
 }
+
+exports.faq = function(req,res){
+	res.render('faq');
+};

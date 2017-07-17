@@ -7,11 +7,14 @@ module.exports = function(app){
 
 
 	app.get('/',index.welcome);
+    app.get('/faq',index.faq);
 
 	app.post('/register',user.register);
 	app.post('/authenticate',user.auth); 
 	app.post('/authenticate/otp',user.authOtp);
     app.get('/user',ensureAuthorized,user.user);
+    app.get('/userInfo',ensureAuthorized,user.userInfo);
+    
     app.get('/users',user.getAllUsers);
 
     app.post('/login',user.login);
@@ -35,6 +38,7 @@ module.exports = function(app){
     //my account
     app.get('/myAccount',ensureAuthorized,user.getAccount);
     app.get('/debit',ensureAuthorized,user.debitAccount);
+    app.get('/credit',ensureAuthorized,user.creditAccount);
     app.get('/transactions',ensureAuthorized,user.getTransactionsHistory);
 
     app.get('/tasksAmIn',ensureAuthorized,task.tasksAmIn);

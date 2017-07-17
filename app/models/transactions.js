@@ -21,6 +21,9 @@ var TransactionSchema = new Schema({
     source: {
     	type: String,
     },
+    type: {
+        type: String,
+    },
     status: {
     	type: String,
     },

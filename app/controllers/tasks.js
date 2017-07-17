@@ -4,6 +4,13 @@ var mongoose = require('mongoose');
     Bid = mongoose.model('Bid');
     Account = mongoose.model('Account');
     Invoice = mongoose.model('Invoice');
+    dateTime = require('node-datetime');
+    shortId = require('shortid');
+
+
+    //africa is talking credentials
+var username = 'gitakaMuchai';
+var apikey = '859103492dc65663f0b46facd6964987d808833eccf09b38c95dcd07ca334804';
 
 
 exports.createTask = function(req,res,next){
@@ -305,11 +312,14 @@ exports.confirm = function(req,res,next){
                       return task.save();
                     })
                      .then(function(task){
+                        sendConfirmNotificationToTasker(tasker,task.task_name);
+                        
                         res.json({
                           error:false,
                           message: "Tasker confirmed",
                           data:task,
                         });
+                        return task;
                      })
                      .catch(function(err){
                       console.log(err);
@@ -387,12 +397,14 @@ exports.invoice = function(req,res,next){
                               task_id : task._id,
                               tasker : task.tasker,
                               amount : task.task_cost,
-                              dueDate : "3/27/2017",
+                              dueDate : dateTime.create().format('Y-m-d H:M:S'),
                            });
                                       
                           invoicePromise = newInvoice.save();
 
                           invoicePromise.then(function(invoice){
+                                  sendInvoiceNotificationToTaskOwner(task.userId,user.name,invoice.amount,task.task_name);
+            
                                   res.json({
                                      error: false,
                                      message:'Client has been invoiced',
@@ -493,6 +505,7 @@ exports.confirmTask = function(req,res,next){
                                 promise.then(function(account){
                                     account.amount = account.amount + task.task_cost;
                                     account.tempAmount = account.tempAmount + task.task_cost;
+                                    //create transaction
                                      return account.save();
                                     
                                  });   
@@ -507,9 +520,11 @@ exports.confirmTask = function(req,res,next){
 
                             })
                             .then(function(invoice){
+                             
+                                    sendPaidNotificationToTasker(user.name,invoice.tasker,invoice.amount,task.task_name);
                                     res.json({
                                         error:false,
-                                        message:'Invoice Cleared,Account Credited',
+                                        message:'Invoice Cleared,Account Debited',
                                     });
                             });
                      })
@@ -607,4 +622,94 @@ exports.invoiceNotification = function(req,res,next){
            }
          }
   ifAuthenticated(handleAuthenticationRequest,req.token);
+};
+
+sendConfirmNotificationToTasker = function(tasker,taskName){
+  var promise = User.findOne({_id:tasker}).exec();
+      promise.then(function(user){
+        var message = "Hello"+" "+user.name +"  " + "your request to undertake the task:"+" "+ taskName +" "+"has been confirmed.";
+        sendSMSToTasker(user.phoneNo,message);
+        
+      })
+      .catch(function(err){
+        console.log("Sending task confirmation error" + err);
+      });
+
+};
+sendInvoiceNotificationToTaskOwner = function(taskOwner,tasker,amount,taskName){
+
+   var promise = User.findOne({_id:taskOwner}).exec();
+      promise.then(function(user){
+        var message = "Hello"+" "+user.name+"."+"you have been invoiced KSH"+" "+amount+" "+"by"+" "+tasker+" "+"For the task:"+" "+taskName+".";
+        sendSMSToTasker(user.phoneNo,message);
+    
+      })
+      .catch(function(err){
+        console.log("Sending task confirmation error" + err);
+      });
+};
+
+sendPaidNotificationToTasker = function(taskOwner,tasker,amount,taskName){
+     var promise = User.findOne({_id:tasker}).exec();
+      promise.then(function(user){
+        var message = "Hello"+" "+user.name+"."+"you have received KSH"+" "+amount+" "+"from"+" "+taskOwner+" "+"For completing the task:"+" "+taskName+".";
+        sendSMSToTasker(user.phoneNo,message);
+
+  
+      })
+      .catch(function(err){
+        console.log("Sending task confirmation error" + err);
+      });
+};
+
+sendSMSToTasker = function(phoneNo,message){
+    var to  = phoneNo;
+        message = message
+    
+    var post_data = querystring.stringify({
+        'username' : username,
+        'to' : to,
+        'message' : message
+    });
+
+    var post_options = {
+         host   : 'api.africastalking.com',
+         path   : '/version1/messaging',
+         method : 'POST',
+        
+         rejectUnauthorized : false,
+         requestCert        : true,
+         agent              : false,
+
+         headers : {
+            'Content-Type' : 'application/x-www-form-urlencoded',
+            'Content-Length': post_data.length,
+            'Accept': 'application/json',
+            'apikey': apikey
+        }
+    };
+
+
+    var post_req = https.request(post_options,function(res){
+        res.setEncoding('utf8');
+        res.on('data',function(chunk){
+            var jsObject = JSON.parse(chunk);
+            var recipients = jsObject.SMSMessageData.Recipients;
+
+            if(recipients.length > 0){
+                for (var i = 0; i < recipients.length; ++i ) {
+                            var logStr  = 'number=' + recipients[i].number;
+                            logStr     += ';cost='   + recipients[i].cost;
+                            logStr     += ';status=' + recipients[i].status; // status is either "Success" or "error message"
+                            console.log(logStr);
+                    }
+            }else {
+                 console.log('Error while sending: ' + jsObject.SMSMessageData.Message);
+            }
+        });
+    });
+
+    post_req.write(post_data);
+    post_req.end();
+   
 };
